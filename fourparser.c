@@ -5,7 +5,7 @@
 #include "fourparser.h"
 #include "fourgame.h"
 
-char *trim_whitespace(char *str)
+char *trim(char *str)
 {
 	char *end;
 
@@ -36,7 +36,7 @@ void parse_input(void)
 	ssize_t len = 0;
 
 	while ((len = getline(&line, &size, stdin)) != -1) {
-		char *line_trm = trim_whitespace(line);
+		char *line_trm = trim(line);
 
 		handle_command(line_trm);
 	}
