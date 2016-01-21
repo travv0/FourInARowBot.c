@@ -3,7 +3,7 @@
 
 #include "gametypes.h"
 
-void dump_game(const struct Game game);
+void dump_game();
 void parse_input(void);
 int handle_command(char *cmd);
 

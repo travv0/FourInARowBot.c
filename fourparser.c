@@ -24,9 +24,18 @@ char *trim(char *str)
 	return str;
 }
 
-void dump_game(const struct Game game)
+void dump_game()
 {
-
+	fprintf(stderr, "timebank: %d\n", game.settings.timebank);
+	fprintf(stderr, "time_per_move: %d\n", game.settings.time_per_move);
+	fprintf(stderr, "player_names: %s\n", game.settings.player_names);
+	fprintf(stderr, "your_bot: %s\n", game.settings.your_bot);
+	fprintf(stderr, "your_botid: %d\n", game.settings.your_botid);
+	fprintf(stderr, "their_botid: %d\n", game.settings.their_botid);
+	fprintf(stderr, "field_columns: %d\n", game.settings.field_columns);
+	fprintf(stderr, "field_rows: %d\n", game.settings.field_rows);
+	fprintf(stderr, "round: %d\n", game.round);
+	fprintf(stderr, "field: ");
 }
 
 void field_from_string(char *str)
@@ -225,6 +234,7 @@ int handle_command(char *cmd)
 					if ((token = strtok(NULL, " ")) != NULL) {
 						game.time_remaining = strtol(token, &end, 10);
 
+						dump_game();
 						printf("place_disc %d\n", calc_best_column(game));
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"action.\"\n");
@@ -241,6 +251,8 @@ int handle_command(char *cmd)
 				return 2;
 			}
 
+		} else if (strcmp(token, "dump") == 0) {
+			dump_game();
 		} else {
 			fprintf(stderr, "\"%s\" is not a valid command.\n", token);
 			return 2;
