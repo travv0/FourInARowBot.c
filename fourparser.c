@@ -89,6 +89,10 @@ void parse_input(void)
 	free(line);
 }
 
+/*
+ * handle_command is a big messy function that populates the game struct.
+ * returns 0 if no errors, 1 if critical error, and 2 if non-critical error
+ */
 int handle_command(char *cmd)
 {
 	if (strlen(cmd) <= 0) {
