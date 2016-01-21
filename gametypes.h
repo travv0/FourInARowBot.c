@@ -10,7 +10,10 @@
 #define TRUE 1
 #define FALSE 0
 
-typedef struct Field { int x[10][10]; } Field;
+#define MAX_FIELD_COLUMNS 10
+#define MAX_FIELD_ROWS 10
+
+typedef struct Field { int x[MAX_FIELD_COLUMNS][MAX_FIELD_ROWS]; } Field;
 
 struct Settings {
 	int		timebank;

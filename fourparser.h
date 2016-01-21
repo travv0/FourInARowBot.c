@@ -5,6 +5,6 @@
 
 void dump_game(const struct Game game);
 void parse_input(void);
-void handle_command(char *cmd);
+int handle_command(char *cmd);
 
 #endif

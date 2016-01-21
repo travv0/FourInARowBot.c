@@ -38,17 +38,18 @@ void parse_input(void)
 	while ((len = getline(&line, &size, stdin)) != -1) {
 		char *line_trm = trim(line);
 
-		handle_command(line_trm);
+		if (handle_command(line_trm) == 1)
+			break;
 	}
 
 	free(line);
 }
 
-void handle_command(char *cmd)
+int handle_command(char *cmd)
 {
 	if (strlen(cmd) <= 0) {
 		fprintf(stderr, "No input found.\n");
-		return;
+		return 2;
 	}
 
 	char *token;
@@ -64,7 +65,7 @@ void handle_command(char *cmd)
 						game.settings.timebank = strtol(token, &end, 10);
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
-						return;
+						return 2;
 					}
 
 				} else if (strcmp(token, "time_per_move") == 0) {
@@ -73,7 +74,7 @@ void handle_command(char *cmd)
 						game.settings.time_per_move = strtol(token, &end, 10);
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
-						return;
+						return 2;
 					}
 
 				} else if (strcmp(token, "player_names") == 0) {
@@ -82,7 +83,7 @@ void handle_command(char *cmd)
 						game.settings.player_names = token;
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
-						return;
+						return 2;
 					}
 
 				} else if (strcmp(token, "your_bot") == 0) {
@@ -91,7 +92,7 @@ void handle_command(char *cmd)
 						game.settings.your_bot = token;
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
-						return;
+						return 2;
 					}
 
 				} else if (strcmp(token, "your_botid") == 0) {
@@ -102,34 +103,44 @@ void handle_command(char *cmd)
 						game.settings.their_botid = game.settings.your_botid % 2 + 1;
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
-						return;
+						return 2;
 					}
 
 				} else if (strcmp(token, "field_columns") == 0) {
 
 					if ((token = strtok(NULL, " ")) != NULL) {
 						game.settings.field_columns = strtol(token, &end, 10);
+
+						if (game.settings.field_columns > MAX_FIELD_COLUMNS) {
+							fprintf(stderr, "field_columns exceeds max value of %d\n", MAX_FIELD_COLUMNS);
+							return 1;
+						}
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
-						return;
+						return 2;
 					}
 
 				} else if (strcmp(token, "field_rows") == 0) {
 
 					if ((token = strtok(NULL, " ")) != NULL) {
 						game.settings.field_rows = strtol(token, &end, 10);
+
+						if (game.settings.field_rows > MAX_FIELD_ROWS) {
+							fprintf(stderr, "field_rows exceeds max value of %d\n", MAX_FIELD_ROWS);
+							return 1;
+						}
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
-						return;
+						return 2;
 					}
 
 				} else {
 					fprintf(stderr, "\"%s\" is not a valid command.\n", token);
-					return;
+					return 2;
 				}
 			} else {
 				fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
-				return;
+				return 2;
 			}
 
 		} else if (strcmp(token, "update") == 0) {
@@ -143,32 +154,32 @@ void handle_command(char *cmd)
 								game.round = strtol(token, &end, 10);
 							} else {
 								fprintf(stderr, "Not enough arguments for command \"update.\"\n");
-								return;
+								return 2;
 							}
 						} else if (strcmp(token, "field") == 0) {
 							if ((token = strtok(NULL, " ")) != NULL) {
 								game.field = token;
 							} else {
 								fprintf(stderr, "Not enough arguments for command \"update.\"\n");
-								return;
+								return 2;
 							}
 						} else {
 							fprintf(stderr, "\"%s\" is not a valid command.\n", token);
-							return;
+							return 2;
 						}
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"update.\"\n");
-						return;
+						return 2;
 					}
 
 				} else {
 					fprintf(stderr, "\"%s\" is not a valid command.\n", token);
-					return;
+					return 2;
 				}
 
 			} else {
 				fprintf(stderr, "Not enough arguments for command \"update.\"\n");
-				return;
+				return 2;
 			}
 
 		} else if (strcmp(token, "action") == 0) {
@@ -182,25 +193,27 @@ void handle_command(char *cmd)
 						printf("place_disc %d\n", calc_best_column(game));
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"action.\"\n");
-						return;
+						return 2;
 					}
 
 				} else {
 					fprintf(stderr, "\"%s\" is not a valid command.\n", token);
-					return;
+					return 2;
 				}
 
 			} else {
 				fprintf(stderr, "Not enough arguments for command \"action.\"\n");
-				return;
+				return 2;
 			}
 
 		} else {
 			fprintf(stderr, "\"%s\" is not a valid command.\n", token);
-			return;
+			return 2;
 		}
 	} else {
 		fprintf(stderr, "Unable to parse command.\n");
-		return;
+		return 2;
 	}
+
+	return 0;
 }
