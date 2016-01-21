@@ -181,7 +181,7 @@ void handle_command(char *cmd)
 
 						printf("place_disc %d\n", calc_best_column(game));
 					} else {
-						fprintf(stderr, "Not enough arguments for command \"update.\"\n");
+						fprintf(stderr, "Not enough arguments for command \"action.\"\n");
 						return;
 					}
 
@@ -191,7 +191,7 @@ void handle_command(char *cmd)
 				}
 
 			} else {
-				fprintf(stderr, "Not enough arguments for command \"update.\"\n");
+				fprintf(stderr, "Not enough arguments for command \"action.\"\n");
 				return;
 			}
 
