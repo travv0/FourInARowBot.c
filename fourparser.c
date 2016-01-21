@@ -52,6 +52,7 @@ void handle_command(char *cmd)
 	}
 
 	char *token;
+	char *end;
 
 	if ((token = strtok(cmd, " ")) != NULL) {
 		if (strcmp(token, "settings") == 0) {
@@ -60,7 +61,7 @@ void handle_command(char *cmd)
 				if (strcmp(token, "timebank") == 0) {
 
 					if ((token = strtok(NULL, " ")) != NULL) {
-						printf("%s\n", token);
+						game.settings.timebank = strtol(token, &end, 10);
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
 						return;
@@ -69,7 +70,7 @@ void handle_command(char *cmd)
 				} else if (strcmp(token, "time_per_move") == 0) {
 
 					if ((token = strtok(NULL, " ")) != NULL) {
-						printf("%s\n", token);
+						game.settings.time_per_move = strtol(token, &end, 10);
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
 						return;
@@ -78,7 +79,7 @@ void handle_command(char *cmd)
 				} else if (strcmp(token, "player_names") == 0) {
 
 					if ((token = strtok(NULL, " ")) != NULL) {
-						printf("%s\n", token);
+						game.settings.player_names = token;
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
 						return;
@@ -87,7 +88,7 @@ void handle_command(char *cmd)
 				} else if (strcmp(token, "your_bot") == 0) {
 
 					if ((token = strtok(NULL, " ")) != NULL) {
-						printf("%s\n", token);
+						game.settings.your_bot = token;
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
 						return;
@@ -96,7 +97,9 @@ void handle_command(char *cmd)
 				} else if (strcmp(token, "your_botid") == 0) {
 
 					if ((token = strtok(NULL, " ")) != NULL) {
-						printf("%s\n", token);
+						game.settings.your_botid = strtol(token, &end, 10);
+
+						game.settings.their_botid = game.settings.your_botid % 2 + 1;
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
 						return;
@@ -105,7 +108,7 @@ void handle_command(char *cmd)
 				} else if (strcmp(token, "field_columns") == 0) {
 
 					if ((token = strtok(NULL, " ")) != NULL) {
-						printf("%s\n", token);
+						game.settings.field_columns = strtol(token, &end, 10);
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
 						return;
@@ -114,7 +117,7 @@ void handle_command(char *cmd)
 				} else if (strcmp(token, "field_rows") == 0) {
 
 					if ((token = strtok(NULL, " ")) != NULL) {
-						printf("%s\n", token);
+						game.settings.field_rows = strtol(token, &end, 10);
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"settings.\"\n");
 						return;
@@ -137,14 +140,14 @@ void handle_command(char *cmd)
 					if ((token = strtok(NULL, " ")) != NULL) {
 						if (strcmp(token, "round") == 0) {
 							if ((token = strtok(NULL, " ")) != NULL) {
-								printf("%s\n", token);
+								game.round = strtol(token, &end, 10);
 							} else {
 								fprintf(stderr, "Not enough arguments for command \"update.\"\n");
 								return;
 							}
 						} else if (strcmp(token, "field") == 0) {
 							if ((token = strtok(NULL, " ")) != NULL) {
-								printf("%s\n", token);
+								game.field = token;
 							} else {
 								fprintf(stderr, "Not enough arguments for command \"update.\"\n");
 								return;
@@ -174,9 +177,9 @@ void handle_command(char *cmd)
 				if (strcmp(token, "move") == 0) {
 
 					if ((token = strtok(NULL, " ")) != NULL) {
-						printf("%s\n", token);
+						game.time_remaining = strtol(token, &end, 10);
 
-						// printf("place_disc %d\n", calc_best_column(game));
+						printf("place_disc %d\n", calc_best_column(game));
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"update.\"\n");
 						return;
