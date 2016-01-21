@@ -4,6 +4,7 @@
 
 #include "fourparser.h"
 #include "fourgame.h"
+#include "mystrlib.h"
 
 void dump_game()
 {
