@@ -29,6 +29,38 @@ void dump_game(const struct Game game)
 
 }
 
+void field_from_string(char *str)
+{
+	int i;
+	int j;
+	char *token;
+	char *subtoken;
+	char *end;
+	char *line_hold[MAX_FIELD_ROWS];
+
+	line_hold[0] = strtok(str, ";");
+
+	for (i = 1; i < MAX_FIELD_COLUMNS; ++i) {
+		line_hold[i] = strtok(NULL, ";");
+	}
+
+	for (i = 0; i < MAX_FIELD_COLUMNS; ++i) {
+		if (line_hold[i] != NULL) {
+			subtoken = strtok(line_hold[i], ",");
+
+			for (j = 0; j < MAX_FIELD_ROWS; ++j) {
+				if (subtoken != NULL) {
+					game.field[i][j] = strtol(subtoken, &end, 10);
+				}
+
+				subtoken = strtok(NULL, ",");
+			}
+		}
+
+		token = strtok(NULL, ";");
+	}
+}
+
 void parse_input(void)
 {
 	char *line = NULL;
@@ -158,7 +190,7 @@ int handle_command(char *cmd)
 							}
 						} else if (strcmp(token, "field") == 0) {
 							if ((token = strtok(NULL, " ")) != NULL) {
-								game.field = token;
+								field_from_string(token);
 							} else {
 								fprintf(stderr, "Not enough arguments for command \"update.\"\n");
 								return 2;

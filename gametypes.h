@@ -13,8 +13,6 @@
 #define MAX_FIELD_COLUMNS 10
 #define MAX_FIELD_ROWS 10
 
-typedef struct Field { int x[MAX_FIELD_COLUMNS][MAX_FIELD_ROWS]; } Field;
-
 struct Settings {
 	int		timebank;
 	int		time_per_move;
@@ -31,8 +29,7 @@ struct Settings {
 struct Game {
 	struct Settings	settings;
 	int				round;
-	char			*field;
-	Field			field_array;
+	int				field[MAX_FIELD_COLUMNS][MAX_FIELD_ROWS];
 	int				time_remaining;
 } game;
 
