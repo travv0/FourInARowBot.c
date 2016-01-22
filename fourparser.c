@@ -17,7 +17,21 @@ void dump_game()
 	fprintf(stderr, "field_columns: %d\n", game.settings.field_columns);
 	fprintf(stderr, "field_rows: %d\n", game.settings.field_rows);
 	fprintf(stderr, "round: %d\n", game.round);
+
+	int i;
+	int j;
+
 	fprintf(stderr, "field: ");
+	for (i = 0; i < game.settings.field_rows; ++i) {
+		for (j = 0; j < game.settings.field_columns; ++j) {
+			if (i > 0 && j == 0) {
+				fprintf(stderr, "       ");
+			}
+
+			fprintf(stderr, "%d ", game.field[i][j]);
+		}
+		fprintf(stderr, "\n");
+	}
 }
 
 void field_from_string(char *str)
