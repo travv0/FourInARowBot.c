@@ -21,8 +21,6 @@ struct Settings {
 	int		field_columns;
 	int		field_rows;
 	char	*player_names;
-	char	*player_name1;
-	char	*player_name2;
 	char	*your_bot;
 };
 
@@ -32,5 +30,17 @@ struct Game {
 	int				field[MAX_FIELD_COLUMNS][MAX_FIELD_ROWS];
 	int				time_remaining;
 } game;
+
+struct AttackPoints {
+	int		shared_odd_count;
+	int		shared_even_count;
+	int		unshared_odd_count;
+	int		unshared_even_count;
+};
+
+struct Player {
+	int					id;
+	struct AttackPoints attacks;
+};
 
 #endif
