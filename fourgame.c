@@ -28,7 +28,7 @@ void get_attack_point_counts(struct Player *red, struct Player *black,
 				black_count = 0; // get_longest_line(x, y, black.id, field);
 				field[x][y] = 0;
 
-				if (red_count >= 4 && black_count >= 4) {
+				if (red_count >= WIN_LENGTH && black_count >= WIN_LENGTH) {
 					if (y % 2 == 0) {
 						red->attacks.shared_even_count++;
 						black->attacks.shared_even_count++;
@@ -40,7 +40,7 @@ void get_attack_point_counts(struct Player *red, struct Player *black,
 					break;
 				}
 
-				if (red_count >= 4) {
+				if (red_count >= WIN_LENGTH) {
 					if (y % 2 == 0)
 						red->attacks.shared_even_count++;
 					else
@@ -49,7 +49,7 @@ void get_attack_point_counts(struct Player *red, struct Player *black,
 					break;
 				}
 
-				if (black_count >= 4) {
+				if (black_count >= WIN_LENGTH) {
 					if (y % 2 == 0)
 						black->attacks.shared_even_count++;
 					else
