@@ -29,6 +29,7 @@ struct Game {
 	int				round;
 	int				field[MAX_FIELD_COLUMNS][MAX_FIELD_ROWS];
 	int				time_remaining;
+	int				column_fill[MAX_FIELD_COLUMNS];
 } game;
 
 struct AttackPoints {

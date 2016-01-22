@@ -18,17 +18,17 @@ void dump_game()
 	fprintf(stderr, "field_rows: %d\n", game.settings.field_rows);
 	fprintf(stderr, "round: %d\n", game.round);
 
-	int i;
-	int j;
+	int x;
+	int y;
 
 	fprintf(stderr, "field: ");
-	for (i = 0; i < game.settings.field_rows; ++i) {
-		for (j = 0; j < game.settings.field_columns; ++j) {
-			if (i > 0 && j == 0) {
+	for (y = 0; y < game.settings.field_rows; ++y) {
+		for (x = 0; x < game.settings.field_columns; ++x) {
+			if (y > 0 && x == 0) {
 				fprintf(stderr, "       ");
 			}
 
-			fprintf(stderr, "%d ", game.field[i][j]);
+			fprintf(stderr, "%d ", game.field[x][y]);
 		}
 		fprintf(stderr, "\n");
 	}
@@ -36,29 +36,29 @@ void dump_game()
 
 void field_from_string(char *str)
 {
-	int i;
-	int j;
+	int x;
+	int y;
 	char *token;
 	char *end;
 	char *line_hold[MAX_FIELD_ROWS];
 
-	for (i = 1; i < MAX_FIELD_ROWS; ++i)
-		line_hold[i] = NULL;
+	for (y = 1; y < MAX_FIELD_ROWS; ++y)
+		line_hold[y] = NULL;
 
 	if ((line_hold[0] = strtok(str, ";")) != NULL) {
-		for (i = 1; i < MAX_FIELD_COLUMNS; ++i) {
+		for (y = 1; y < MAX_FIELD_ROWS; ++y) {
 			if ((token = strtok(NULL, ";")) != NULL)
-				line_hold[i] = token;
+				line_hold[y] = token;
 		}
 	}
 
-	for (i = 0; i < MAX_FIELD_COLUMNS; ++i) {
-		if (line_hold[i] != NULL) {
-			token = strtok(line_hold[i], ",");
+	for (y = 0; y < MAX_FIELD_ROWS; ++y) {
+		if (line_hold[y] != NULL) {
+			token = strtok(line_hold[y], ",");
 
-			for (j = 0; j < MAX_FIELD_ROWS; ++j) {
+			for (x = 0; x < MAX_FIELD_COLUMNS; ++x) {
 				if (token != NULL) {
-					game.field[i][j] = strtol(token, &end, 10);
+					game.field[x][y] = strtol(token, &end, 10);
 				}
 
 				token = strtok(NULL, ",");

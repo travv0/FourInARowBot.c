@@ -6,11 +6,12 @@
 #include "gametypes.h"
 #include "fourgame.h"
 
-int can_be_placed(int x, int y, int field[][MAX_FIELD_ROWS]) {
-	return TRUE;
+static int can_be_placed(int x, int field[][MAX_FIELD_ROWS])
+{
+	return game.column_fill[x] >= game.settings.field_rows;
 }
 
-void get_attack_point_counts(struct Player *red, struct Player *black,
+static void get_attack_point_counts(struct Player *red, struct Player *black,
 	int field[][MAX_FIELD_ROWS])
 {
 	int x;
@@ -21,7 +22,7 @@ void get_attack_point_counts(struct Player *red, struct Player *black,
 
 	for (x = 0; x < game.settings.field_columns; ++x) {
 		for (y = 0; y < game.settings.field_rows; ++y) {
-			if (field[x][y] == 0 && !can_be_placed(x, y, field)) {
+			if (field[x][y] == 0 && !can_be_placed(x, field)) {
 				field[x][y] = red->id;
 				red_count = 0; // get_longest_line(x, y, red.id, field);
 				field[x][y] = black->id;
@@ -62,6 +63,35 @@ void get_attack_point_counts(struct Player *red, struct Player *black,
 	}
 }
 
+static void fill_column_fill(void)
+{
+	int x;
+	int y;
+
+	for (x = 0; x < game.settings.field_columns; ++x) {
+		game.column_fill[x] = 0;
+	}
+
+	if (game.round > 1) {
+		int count = 0;
+
+		for (x = 0; x < game.settings.field_columns; ++x) {
+			for (y = 0; y < game.settings.field_rows; ++y) {
+				if (game.field[x][y] != 0) {
+					game.column_fill[x]++;
+					count++;
+				}
+
+				if (count >= game.round - 1)
+					break;
+			}
+
+			if (count >= game.round - 1)
+				break;
+		}
+	}
+}
+
 int calc_best_column(struct Game game)
 {
 	struct Player me;
@@ -69,6 +99,8 @@ int calc_best_column(struct Game game)
 
 	me.id = game.settings.your_botid;
 	them.id = game.settings.their_botid;
+
+	fill_column_fill();
 
 	get_attack_point_counts(&me, &them, game.field);
 
