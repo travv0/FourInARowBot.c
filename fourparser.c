@@ -6,7 +6,7 @@
 #include "fourgame.h"
 #include "mystrlib.h"
 
-void dump_game()
+void dump_game(void)
 {
 	fprintf(stderr, "timebank: %d\n", game.settings.timebank);
 	fprintf(stderr, "time_per_move: %d\n", game.settings.time_per_move);
@@ -69,26 +69,11 @@ void field_from_string(char *str)
 	}
 }
 
-void parse_input(void)
-{
-	int size = 1024;
-	char *line = (char *) malloc(size * sizeof(char *));
-
-	while (fgets(line, size, stdin)) {
-		char *line_trm = trim(line);
-
-		if (handle_command(line_trm) == 1)
-			break;
-	}
-
-	free(line);
-}
-
 /*
  * handle_command is a big messy function that populates the game struct.
  * returns 0 if no errors, 1 if critical error, and 2 if non-critical error
  */
-int handle_command(char *cmd)
+static int handle_command(char *cmd)
 {
 	if (strlen(cmd) <= 0) {
 		fprintf(stderr, "No input found.\n");
@@ -262,4 +247,19 @@ int handle_command(char *cmd)
 	}
 
 	return 0;
+}
+
+void parse_input(void)
+{
+	int size = 1024;
+	char *line = (char *) malloc(size * sizeof(char *));
+
+	while (fgets(line, size, stdin)) {
+		char *line_trm = trim(line);
+
+		if (handle_command(line_trm) == 1)
+			break;
+	}
+
+	free(line);
 }
