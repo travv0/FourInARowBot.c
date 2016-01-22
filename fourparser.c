@@ -57,9 +57,8 @@ void field_from_string(char *str)
 
 void parse_input(void)
 {
-	char *line = NULL;
 	int size = 1024;
-	ssize_t len = 0;
+	char *line = (char *) malloc(size * sizeof(char *));
 
 	while (fgets(line, size, stdin)) {
 		char *line_trm = trim(line);
