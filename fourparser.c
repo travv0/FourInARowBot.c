@@ -58,10 +58,10 @@ void field_from_string(char *str)
 void parse_input(void)
 {
 	char *line = NULL;
-	size_t size;
+	int size = 1024;
 	ssize_t len = 0;
 
-	while ((len = getline(&line, &size, stdin)) != -1) {
+	while (fgets(line, size, stdin)) {
 		char *line_trm = trim(line);
 
 		if (handle_command(line_trm) == 1)
