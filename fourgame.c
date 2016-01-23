@@ -9,14 +9,24 @@
 #include "gametypes.h"
 #include "fourgame.h"
 
+const struct AttackPoints ATTACK_POINTS_DEFAULT = {
+	0, 0, 0, 0
+};
+
 int min(int i, int j)
 {
-	return i < j;
+	if (i < j)
+		return i;
+	else
+		return j;
 }
 
 int max(int i, int j)
 {
-	return i > j;
+	if (i > j)
+		return i;
+	else
+		return j;
 }
 
 static int board_full(int rnd)
@@ -24,9 +34,10 @@ static int board_full(int rnd)
 	return rnd > game.settings.field_columns * game.settings.field_rows;
 }
 
-static int can_be_placed(int x, int field[][MAX_FIELD_ROWS])
+static int can_be_placed(int x, int y, int field[][MAX_FIELD_ROWS])
 {
-	return game.column_fill[x] >= game.settings.field_rows;
+	return game.column_fill[x] < game.settings.field_rows
+		&& y == game.settings.field_rows - game.column_fill[x] - 1;
 }
 
 static int get_longest_line(int x, int y, int botid, int field[][MAX_FIELD_ROWS])
@@ -40,20 +51,23 @@ static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,
 		int alpha, int beta, int maximizing_player)
 {
 	int done = FALSE;
+
 	int their_longest = get_longest_line(x, y, game.settings.their_botid, field);
 	int your_longest = get_longest_line(x, y, game.settings.your_botid, field);
 
-	int last_player;
+	/* int last_player; */
 
 	int chldx;
 	int chldy;
 
+	int v;
+
 	if (depth <= 0 || their_longest >= WIN_LENGTH ||
 			your_longest >= WIN_LENGTH) {
-		if (maximizing_player)
-			last_player = 2;
-		else
-			last_player = 1;
+		/* if (maximizing_player) */
+		/* 	last_player = 2; */
+		/* else */
+		/* 	last_player = 1; */
 
 		if (their_longest >= WIN_LENGTH)
 			return -10000; // evaluate function goes here
@@ -65,11 +79,11 @@ static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,
 		return 0;
 
 	if (maximizing_player) {
-		int v = INT_MIN;
+		v = INT_MIN;
 
 		for (chldx = 0; chldx < game.settings.field_columns; ++chldx) {
 			for (chldy = 0; chldy < game.settings.field_rows; ++chldy) {
-				if (can_be_placed(chldx, field)) {
+				if (can_be_placed(chldx, chldy, field)) {
 					field[chldx][chldy] = game.settings.your_botid;
 
 					v = max(v, alpha_beta(field, chldx, chldy, depth - 1, alpha, beta, FALSE));
@@ -90,11 +104,11 @@ static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,
 
 		return v;
 	} else {
-		int v = INT_MAX;
+		v = INT_MAX;
 
 		for (chldx = 0; chldx < game.settings.field_columns; ++chldx) {
 			for (chldy = 0; chldy < game.settings.field_rows; ++chldy) {
-				if (can_be_placed(chldx, field) && chldy == game.column_fill[chldx] + 1) {
+				if (can_be_placed(chldx, chldy, field)) {
 					field[chldx][chldy] = game.settings.their_botid;
 					game.column_fill[chldx]++;
 
@@ -128,7 +142,7 @@ static int increment_points(struct Player *red, struct Player *black,
 	int red_count;
 	int black_count;
 
-	if (field[x][y] == 0 && !can_be_placed(x, field)) {
+	if (field[x][y] == 0 && !can_be_placed(x, y, field)) {
 		field[x][y] = red->id;
 		red_count = get_longest_line(x, y, red->id, field);
 		field[x][y] = black->id;
@@ -187,26 +201,27 @@ static void fill_column_fill(void)
 {
 	int x;
 	int y;
+	int cnt;
 
 	for (x = 0; x < game.settings.field_columns; ++x) {
 		game.column_fill[x] = 0;
 	}
 
 	if (game.round > 1) {
-		int count = 0;
+		cnt = 0;
 
 		for (x = 0; x < game.settings.field_columns; ++x) {
 			for (y = 0; y < game.settings.field_rows; ++y) {
 				if (game.field[x][y] != 0) {
 					game.column_fill[x]++;
-					count++;
+					cnt++;
 				}
 
-				if (count >= game.round - 1)
+				if (cnt >= game.round - 1)
 					break;
 			}
 
-			if (count >= game.round - 1)
+			if (cnt >= game.round - 1)
 				break;
 		}
 	}
@@ -248,8 +263,23 @@ int calc_best_column(struct Game game)
 
 	int col_to_drop = game.settings.field_columns / 2;
 
+	int ordering[MAX_FIELD_COLUMNS];
+	int col;
+
+	int i;
+	int j;
+
+	int maxAB = INT_MIN;
+	int resAB;
+
+	int x;
+	int y;
+
 	me.id = game.settings.your_botid;
 	them.id = game.settings.their_botid;
+
+	me.attacks = ATTACK_POINTS_DEFAULT;
+	them.attacks = ATTACK_POINTS_DEFAULT;
 
 	fill_column_fill();
 
@@ -260,11 +290,7 @@ int calc_best_column(struct Game game)
 	else if (has_advantage(them, me))
 		fprintf(stderr, "Their advantage...\n");
 
-	int ordering[MAX_FIELD_COLUMNS];
-
-	int i = game.settings.field_columns / 2;
-	int j;
-
+	i = game.settings.field_columns / 2;
 	ordering[0] = i;
 
 	for (j = 1; j < game.settings.field_columns; ++j) {
@@ -275,18 +301,13 @@ int calc_best_column(struct Game game)
 		i = ordering[j];
 	}
 
-	int maxAB = INT_MIN;
-
-	int x;
-	int y;
-
 	for (x = 0; x < game.settings.field_columns; ++x) {
 		for (y = 0; y < game.settings.field_rows; ++y) {
-			int col = ordering[x];
+			col = ordering[x];
 
-			if (can_be_placed(col, game.field)) {
+			if (can_be_placed(col, y, game.field)) {
 				game.field[col][y] = game.settings.your_botid;
-				int resAB = alpha_beta(game.field, col, y,
+				resAB = alpha_beta(game.field, col, y,
 						ALPHABETA_LEVEL, INT_MIN, INT_MAX, FALSE);
 				game.field[col][y] = 0;
 

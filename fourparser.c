@@ -8,6 +8,9 @@
 
 void dump_game(void)
 {
+	int x;
+	int y;
+
 	fprintf(stderr, "timebank: %d\n", game.settings.timebank);
 	fprintf(stderr, "time_per_move: %d\n", game.settings.time_per_move);
 	fprintf(stderr, "player_names: %s\n", game.settings.player_names);
@@ -17,9 +20,6 @@ void dump_game(void)
 	fprintf(stderr, "field_columns: %d\n", game.settings.field_columns);
 	fprintf(stderr, "field_rows: %d\n", game.settings.field_rows);
 	fprintf(stderr, "round: %d\n", game.round);
-
-	int x;
-	int y;
 
 	fprintf(stderr, "field: ");
 	for (y = 0; y < game.settings.field_rows; ++y) {
@@ -38,6 +38,7 @@ void field_from_string(char *str)
 {
 	int x;
 	int y;
+
 	char *token;
 	char *end;
 	char *line_hold[MAX_FIELD_ROWS];
@@ -75,13 +76,13 @@ void field_from_string(char *str)
  */
 static int handle_command(char *cmd)
 {
+	char *token;
+	char *end;
+
 	if (strlen(cmd) <= 0) {
 		fprintf(stderr, "No input found.\n");
 		return 2;
 	}
-
-	char *token;
-	char *end;
 
 	if ((token = strtok(cmd, " ")) != NULL) {
 		if (strcmp(token, "settings") == 0) {
@@ -253,9 +254,10 @@ void parse_input(void)
 {
 	int size = 1024;
 	char *line = (char *) malloc(size * sizeof(char *));
+	char *line_trm;
 
 	while (fgets(line, size, stdin)) {
-		char *line_trm = trim(line);
+		line_trm = trim(line);
 
 		if (handle_command(line_trm) == 1)
 			break;
