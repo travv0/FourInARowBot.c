@@ -105,7 +105,137 @@ static int get_longest_line(int x, int y, int botid, int field[][MAX_FIELD_ROWS]
 		}
 	}
 
+	/* fprintf(stderr, "%d\n", max_count); */
 	return max_count;
+}
+
+/*
+ * returns true if it finds an attack point
+ */
+static int increment_points(struct Player *red, struct Player *black,
+		int field[][MAX_FIELD_ROWS], int x, int y)
+{
+	int red_count;
+	int black_count;
+
+	if (field[x][y] == 0 && !can_be_placed(x, y, field)) {
+		field[x][y] = red->id;
+		red_count = get_longest_line(x, y, red->id, field);
+		field[x][y] = black->id;
+		black_count = get_longest_line(x, y, black->id, field);
+		field[x][y] = 0;
+
+		if (red_count >= WIN_LENGTH && black_count >= WIN_LENGTH) {
+			if (y % 2 == 0) {
+				red->attacks.shared_even_count++;
+				black->attacks.shared_even_count++;
+			} else {
+				red->attacks.shared_odd_count++;
+				black->attacks.shared_odd_count++;
+			}
+
+			return TRUE;
+		}
+
+		if (red_count >= WIN_LENGTH) {
+			if (y % 2 == 0)
+				red->attacks.unshared_even_count++;
+			else
+				red->attacks.unshared_odd_count++;
+
+			return TRUE;
+		}
+
+		if (black_count >= WIN_LENGTH) {
+			if (y % 2 == 0)
+				black->attacks.unshared_even_count++;
+			else
+				black->attacks.unshared_odd_count++;
+
+			return TRUE;
+		}
+	};
+
+	return FALSE;
+}
+
+static void get_attack_point_counts(struct Player *red, struct Player *black,
+		int field[][MAX_FIELD_ROWS])
+{
+	int x;
+	int y;
+
+	for (x = 0; x < game.settings.field_columns; ++x) {
+		for (y = game.settings.field_rows - 1; y >= 0; --y) {
+			if (increment_points(red, black, field, x, y))
+				break;
+		}
+	}
+}
+
+static int has_advantage(struct Player chk_player, struct Player opp_player)
+{
+	return (chk_player.id == 1 &&
+			(
+			 chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count + 1 ||
+			 (chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count &&
+			  chk_player.attacks.shared_odd_count % 2 != 0) ||
+			 (opp_player.attacks.unshared_odd_count == 0 && (chk_player.attacks.shared_odd_count +
+									 chk_player.attacks.unshared_odd_count) % 2 != 0)
+			)
+	       ) || (chk_player.id == 2 &&
+		       (
+			(opp_player.attacks.shared_odd_count + opp_player.attacks.unshared_odd_count == 0 &&
+			 chk_player.attacks.shared_even_count + chk_player.attacks.unshared_even_count > 0) ||
+			chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count + 2 ||
+			(chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count &&
+			 opp_player.attacks.shared_odd_count > 0 && (opp_player.attacks.shared_odd_count % 2) == 0) ||
+			(chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count + 1 &&
+			 opp_player.attacks.unshared_odd_count > 0) ||
+			(opp_player.attacks.unshared_odd_count == 0 &&
+			 chk_player.attacks.unshared_odd_count == 1 &&
+			 opp_player.attacks.shared_odd_count > 0) ||
+			(opp_player.attacks.unshared_odd_count = 0 &&
+			 chk_player.attacks.shared_odd_count + chk_player.attacks.unshared_odd_count > 0 &&
+			 (chk_player.attacks.shared_odd_count + chk_player.attacks.unshared_odd_count) % 2 == 0)
+		       )
+		    );
+}
+
+static int evaluate(int botid, int winnerid, int lastx, int lasty,
+		int last_player, int field[][MAX_FIELD_ROWS])
+{
+	int modifier = 0;
+	int bad_modifier = 0;
+
+	struct Player you;
+	struct Player them;
+
+	you.id = game.settings.your_botid;
+	them.id = game.settings.their_botid;
+
+	you.attacks = ATTACK_POINTS_DEFAULT;
+	them.attacks = ATTACK_POINTS_DEFAULT;
+
+	if (winnerid == game.settings.their_botid)
+		return -WIN_SCORE;
+	else if (winnerid == game.settings.your_botid)
+		return WIN_SCORE;
+	else {
+		field[lastx][lasty] = 0;
+		if (you.id < them.id)
+			get_attack_point_counts(&you, &them, field);
+		else
+			get_attack_point_counts(&them, &you, field);
+		field[lastx][lasty] = last_player;
+
+		if (has_advantage(them, you))
+			bad_modifier += STRATEGY_BONUS;
+		else if (has_advantage(you, them))
+			modifier += STRATEGY_BONUS;
+
+		return modifier - bad_modifier;
+	}
 }
 
 static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,
@@ -116,7 +246,7 @@ static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,
 	int their_longest = get_longest_line(x, y, game.settings.their_botid, field);
 	int your_longest = get_longest_line(x, y, game.settings.your_botid, field);
 
-	/* int last_player; */
+	int last_player;
 
 	int chldx;
 	int chldy;
@@ -125,17 +255,25 @@ static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,
 
 	if (depth <= 0 || their_longest >= WIN_LENGTH ||
 			your_longest >= WIN_LENGTH) {
-		/* if (maximizing_player) */
-		/* 	last_player = 2; */
-		/* else */
-		/* 	last_player = 1; */
+		if (maximizing_player)
+			last_player = 2;
+		else
+			last_player = 1;
 
 		if (their_longest >= WIN_LENGTH)
-			return -10000; // evaluate function goes here
+			return evaluate(game.settings.your_botid,
+					game.settings.their_botid,
+					x, y, last_player, field)
+				+ ALPHABETA_LEVEL - depth;
 		else if (your_longest >= WIN_LENGTH)
-			return 10000; // evaluate function goes here
+			return evaluate(game.settings.your_botid,
+					game.settings.your_botid,
+					x, y, last_player, field)
+				- ALPHABETA_LEVEL - depth;
 		else
-			return 0; // evaluate function goes here
+			return evaluate(game.settings.your_botid, 0,
+					x, y, last_player, field)
+				- ALPHABETA_LEVEL - depth;
 	} else if (board_full(game.round + ALPHABETA_LEVEL - depth))
 		return 0;
 
@@ -194,70 +332,6 @@ static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,
 	}
 }
 
-/*
- * returns true if it finds an attack point
- */
-static int increment_points(struct Player *red, struct Player *black,
-		int field[][MAX_FIELD_ROWS], int x, int y)
-{
-	int red_count;
-	int black_count;
-
-	if (field[x][y] == 0 && !can_be_placed(x, y, field)) {
-		field[x][y] = red->id;
-		red_count = get_longest_line(x, y, red->id, field);
-		field[x][y] = black->id;
-		black_count = get_longest_line(x, y, black->id, field);
-		field[x][y] = 0;
-
-		if (red_count >= WIN_LENGTH && black_count >= WIN_LENGTH) {
-			if (y % 2 == 0) {
-				red->attacks.shared_even_count++;
-				black->attacks.shared_even_count++;
-			} else {
-				red->attacks.shared_odd_count++;
-				black->attacks.shared_odd_count++;
-			}
-
-			return TRUE;
-		}
-
-		if (red_count >= WIN_LENGTH) {
-			if (y % 2 == 0)
-				red->attacks.shared_even_count++;
-			else
-				red->attacks.shared_odd_count++;
-
-			return TRUE;
-		}
-
-		if (black_count >= WIN_LENGTH) {
-			if (y % 2 == 0)
-				black->attacks.shared_even_count++;
-			else
-				black->attacks.shared_odd_count++;
-
-			return TRUE;
-		}
-	};
-
-	return FALSE;
-}
-
-static void get_attack_point_counts(struct Player *red, struct Player *black,
-		int field[][MAX_FIELD_ROWS])
-{
-	int x;
-	int y;
-
-	for (x = 0; x < game.settings.field_columns; ++x) {
-		for (y = 0; y < game.settings.field_rows; ++y) {
-			if (increment_points(red, black, field, x, y))
-				break;
-		}
-	}
-}
-
 static void fill_column_fill(void)
 {
 	int x;
@@ -288,35 +362,6 @@ static void fill_column_fill(void)
 	}
 }
 
-static int has_advantage(struct Player chk_player, struct Player opp_player)
-{
-	return (chk_player.id == 1 &&
-			(
-			 chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count + 1 ||
-			 (chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count &&
-			  chk_player.attacks.shared_odd_count % 2 != 0) ||
-			 (opp_player.attacks.unshared_odd_count == 0 && (chk_player.attacks.shared_odd_count +
-									 chk_player.attacks.unshared_odd_count) % 2 != 0)
-			)
-	       ) || (chk_player.id == 2 &&
-		       (
-			(opp_player.attacks.shared_odd_count + opp_player.attacks.unshared_odd_count == 0 &&
-			 chk_player.attacks.shared_even_count + chk_player.attacks.unshared_even_count > 0) ||
-			chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count + 2 ||
-			(chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count &&
-			 opp_player.attacks.shared_odd_count > 0 && (opp_player.attacks.shared_odd_count % 2) == 0) ||
-			(chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count + 1 &&
-			 opp_player.attacks.unshared_odd_count > 0) ||
-			(opp_player.attacks.unshared_odd_count == 0 &&
-			 chk_player.attacks.unshared_odd_count == 1 &&
-			 opp_player.attacks.shared_odd_count > 0) ||
-			(opp_player.attacks.unshared_odd_count = 0 &&
-			 chk_player.attacks.shared_odd_count + chk_player.attacks.unshared_odd_count > 0 &&
-			 (chk_player.attacks.shared_odd_count + chk_player.attacks.unshared_odd_count) % 2 == 0)
-		       )
-		    );
-}
-
 int calc_best_column(struct Game game)
 {
 	struct Player me;
@@ -345,6 +390,15 @@ int calc_best_column(struct Game game)
 	fill_column_fill();
 
 	get_attack_point_counts(&me, &them, game.field);
+
+	fprintf(stderr, "Your shared odd count: %d\n", me.attacks.shared_odd_count);
+	fprintf(stderr, "Their shared odd count: %d\n", them.attacks.shared_odd_count);
+	fprintf(stderr, "Your shared even count: %d\n", me.attacks.shared_even_count);
+	fprintf(stderr, "Their shared even count: %d\n", them.attacks.shared_even_count);
+	fprintf(stderr, "Your unshared odd count: %d\n", me.attacks.unshared_odd_count);
+	fprintf(stderr, "Their unshared odd count: %d\n", them.attacks.unshared_odd_count);
+	fprintf(stderr, "Your unshared even count: %d\n", me.attacks.unshared_even_count);
+	fprintf(stderr, "Their unshared even count: %d\n", them.attacks.unshared_even_count);
 
 	if (has_advantage(me, them))
 		fprintf(stderr, "Your advantage!\n");
