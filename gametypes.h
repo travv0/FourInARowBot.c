@@ -3,9 +3,9 @@
 
 #define WIN_LENGTH		4
 #define WIN_SCORE		100000
-#define ALPHABETA_LEVEL	2
-#define STRATEGY_BONUS	500
-#define TIMEBANK_LOW	2000
+#define ALPHABETA_LEVEL		7
+#define STRATEGY_BONUS		500
+#define TIMEBANK_LOW		2000
 
 #define TRUE	1
 #define FALSE	0

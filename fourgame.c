@@ -40,11 +40,72 @@ static int can_be_placed(int x, int y, int field[][MAX_FIELD_ROWS])
 		&& y == game.settings.field_rows - game.column_fill[x] - 1;
 }
 
+static int get_count_in_dir(int x, int y, int dx, int dy, int botid,
+		int field[][MAX_FIELD_ROWS])
+{
+	int tempx = x;
+	int tempy = y;
+
+	int tempx_prev = -1;
+	int tempy_prev = -1;
+
+	int count = 0;
+
+	while (TRUE) {
+		if (tempx < game.settings.field_columns &&
+				tempy < game.settings.field_rows &&
+				(tempx != tempx_prev || tempy != tempy_prev)) {
+			tempx_prev = tempx;
+			tempy_prev = tempy;
+
+			if (field[tempx][tempy] == botid) {
+				count++;
+
+				if (tempx > 0 || dx != -1)
+					tempx = tempx + dx;
+				else
+					break;
+
+				if (tempy > 0 || dy != -1)
+					tempy = tempy + dy;
+				else
+					break;
+			} else
+				break;
+		} else
+			break;
+	}
+
+	return count;
+}
+
 static int get_longest_line(int x, int y, int botid, int field[][MAX_FIELD_ROWS])
 {
-	srand((unsigned) time(NULL));
+	int max_count = 0;
+	int count;
 
-	return rand() % 4;
+	int i;
+	int j;
+
+	for (i = -1; i <= 1; ++i) {
+		for (j = -1; j <= 0; ++j) {
+			count = 0;
+
+			/* exclude redundant directions */
+			if ((i != 0 || j != 0) && (i != 1 || j != 0)) {
+				count = get_count_in_dir(x, y, i, j,
+						botid, field);
+
+				count += get_count_in_dir(x - i, y - j, -i, -j,
+						botid, field);
+
+				if (count > max_count)
+					max_count = count;
+			}
+		}
+	}
+
+	return max_count;
 }
 
 static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,

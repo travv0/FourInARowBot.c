@@ -18,9 +18,3 @@ char *trim(char *str)
 
 	return str;
 }
-
-// ssize_t readline(char **lineptr, FILE *stream) {
-// 	int c;
-
-// 	c = getc(stream)
-// }
