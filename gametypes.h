@@ -3,7 +3,7 @@
 
 #define WIN_LENGTH		4
 #define WIN_SCORE		100000
-#define ALPHABETA_LEVEL		7
+#define ALPHABETA_LEVEL		9
 #define STRATEGY_BONUS		500
 #define TIMEBANK_LOW		2000
 

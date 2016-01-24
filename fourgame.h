@@ -5,6 +5,6 @@
 
 #include "gametypes.h"
 
-int calc_best_column(struct Game game);
+int calc_best_column(void);
 
 #endif

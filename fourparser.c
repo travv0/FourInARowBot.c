@@ -79,6 +79,8 @@ static int handle_command(char *cmd)
 	char *token;
 	char *end;
 
+	int best_move;
+
 	if (strlen(cmd) <= 0) {
 		fprintf(stderr, "No input found.\n");
 		return 2;
@@ -220,7 +222,10 @@ static int handle_command(char *cmd)
 						game.time_remaining = strtol(token, &end, 10);
 
 						dump_game();
-						printf("place_disc %d\n", calc_best_column(game));
+
+						best_move = calc_best_column();
+						fprintf(stderr, "place_disc %d\n", best_move);
+						printf("place_disc %d\n", best_move);
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"action.\"\n");
 						return 2;

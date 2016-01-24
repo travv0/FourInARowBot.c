@@ -284,11 +284,13 @@ static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,
 			for (chldy = 0; chldy < game.settings.field_rows; ++chldy) {
 				if (can_be_placed(chldx, chldy, field)) {
 					field[chldx][chldy] = game.settings.your_botid;
+					game.column_fill[chldx]++;
 
 					v = max(v, alpha_beta(field, chldx, chldy, depth - 1, alpha, beta, FALSE));
 					alpha = max(alpha, v);
 
 					field[chldx][chldy] = 0;
+					game.column_fill[chldx]--;
 
 					if (beta <= alpha) {
 						done = TRUE;
@@ -362,7 +364,7 @@ static void fill_column_fill(void)
 	}
 }
 
-int calc_best_column(struct Game game)
+int calc_best_column(void)
 {
 	struct Player me;
 	struct Player them;
@@ -421,6 +423,13 @@ int calc_best_column(struct Game game)
 			col = ordering[x];
 
 			if (can_be_placed(col, y, game.field)) {
+
+				/* game.field[col][y] = game.settings.your_botid; */
+				/* fprintf(stderr, "(%d, %d) Your longest line: %d\n", col, y, get_longest_line(col, y, game.settings.your_botid, game.field)); */
+				/* game.field[col][y] = game.settings.their_botid; */
+				/* fprintf(stderr, "(%d, %d) Their longest line: %d\n", col, y, get_longest_line(col, y, game.settings.their_botid, game.field)); */
+				/* game.field[col][y] = 0; */
+
 				game.field[col][y] = game.settings.your_botid;
 				resAB = alpha_beta(game.field, col, y,
 						ALPHABETA_LEVEL, INT_MIN, INT_MAX, FALSE);
