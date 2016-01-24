@@ -223,16 +223,16 @@ static int evaluate(int botid, int winnerid, int lastx, int lasty,
 		return WIN_SCORE;
 	else {
 		field[lastx][lasty] = 0;
-		if (you.id < them.id)
+		if (you.id < them.id) /* if you're red */
 			get_attack_point_counts(&you, &them, field);
-		else
+		else /* if they're red */
 			get_attack_point_counts(&them, &you, field);
 		field[lastx][lasty] = last_player;
 
 		if (has_advantage(them, you))
-			bad_modifier += STRATEGY_BONUS;
+			bad_modifier = STRATEGY_BONUS;
 		else if (has_advantage(you, them))
-			modifier += STRATEGY_BONUS;
+			modifier = STRATEGY_BONUS;
 
 		return modifier - bad_modifier;
 	}
