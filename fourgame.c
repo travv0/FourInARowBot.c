@@ -111,6 +111,124 @@ static int get_longest_line(int x, int y, int botid, int field[][MAX_FIELD_ROWS]
 	return max_count;
 }
 
+static int get_pot_longest_line(int x, int y, int botid, int field[][MAX_FIELD_ROWS])
+{
+	int cnt = 0;
+	int piececnt = 0;
+	int max_cnt = 0;
+	int max_piececnt = 0;
+
+	int tempx = x;
+	int tempy = y;
+	int tempx_prev;
+	int tempy_prev;
+
+	int i;
+	int j;
+
+	int can_move;
+
+	for (i = -1; i <= 1; ++i) {
+		for (j = -1; j <= 0; ++j) {
+			cnt = 0;
+			piececnt = 0;
+			can_move = TRUE;
+
+			/* exclude redundant directions */
+			if ((i != 0 || j != 0) && (i != 1 || j != 0)) {
+				tempx_prev = -1;
+				tempy_prev = -1;
+
+				while (TRUE) {
+					if (tempx < game.settings.field_columns &&
+							tempy < game.settings.field_rows &&
+							(tempx != tempx_prev || tempy != tempy_prev)) {
+						tempx_prev = tempx;
+						tempy_prev = tempy;
+
+						if (field[tempx][tempy] == botid ||
+								field[tempx][tempy] == 0) {
+							cnt++;
+
+							 if (field[tempx][tempy] == botid)
+								 piececnt++;
+
+							 if (cnt >= WIN_LENGTH)
+								 break;
+
+							if (tempx > 0 || i != -1)
+								tempx = tempx + i;
+							else
+								break;
+
+							if (tempy > 0 || j != -1)
+								tempy = tempy + j;
+							else
+								break;
+						} else
+							break;
+					} else
+						break;
+				}
+
+				tempx_prev = -1;
+				tempy_prev = -1;
+
+				if (x > 0 || i != 1)
+					tempx = x - i;
+				else
+					can_move = FALSE;
+
+				if (y > 0 || j != 1)
+					tempy = y - j;
+				else
+					can_move = FALSE;
+
+				while (TRUE) {
+					if (tempx < game.settings.field_columns &&
+							tempy < game.settings.field_rows &&
+							(tempx != tempx_prev || tempy != tempy_prev) &&
+							can_move == TRUE && cnt < WIN_LENGTH) {
+						tempx_prev = tempx;
+						tempy_prev = tempy;
+
+						if (field[tempx][tempy] == botid ||
+								field[tempx][tempy] == 0) {
+							cnt++;
+
+							 if (field[tempx][tempy] == botid)
+								 piececnt++;
+
+							if (tempx > 0 || i != -1)
+								tempx = tempx + i;
+							else
+								break;
+
+							if (tempy > 0 || j != -1)
+								tempy = tempy + j;
+							else
+								break;
+						} else
+							break;
+					} else
+						break;
+				}
+
+				if (cnt >= WIN_LENGTH && piececnt >= max_piececnt &&
+						cnt >= max_cnt) {
+					max_piececnt = piececnt;
+					max_cnt = cnt;
+				}
+
+				tempx = x;
+				tempy = y;
+			}
+		}
+	}
+
+	return max_piececnt;
+}
+
 /*
  * returns true if it finds an attack point
  */
@@ -122,12 +240,12 @@ static int increment_points(struct Player *red, struct Player *black,
 
 	if (field[x][y] == 0 && !can_be_placed(x, y, field)) {
 		field[x][y] = red->id;
-		red_count = get_longest_line(x, y, red->id, field);
+		red_count = get_pot_longest_line(x, y, red->id, field);
 		field[x][y] = black->id;
-		black_count = get_longest_line(x, y, black->id, field);
+		black_count = get_pot_longest_line(x, y, black->id, field);
 		field[x][y] = 0;
 
-		if (red_count >= WIN_LENGTH && black_count >= WIN_LENGTH) {
+		if (red_count >= WIN_LENGTH - 1 && black_count >= WIN_LENGTH - 1) {
 			if (y % 2 == 0) {
 				red->attacks.shared_even_count++;
 				black->attacks.shared_even_count++;
@@ -139,7 +257,7 @@ static int increment_points(struct Player *red, struct Player *black,
 			return TRUE;
 		}
 
-		if (red_count >= WIN_LENGTH) {
+		if (red_count >= WIN_LENGTH - 1) {
 			if (y % 2 == 0)
 				red->attacks.unshared_even_count++;
 			else
@@ -148,7 +266,7 @@ static int increment_points(struct Player *red, struct Player *black,
 			return TRUE;
 		}
 
-		if (black_count >= WIN_LENGTH) {
+		if (black_count >= WIN_LENGTH - 1) {
 			if (y % 2 == 0)
 				black->attacks.unshared_even_count++;
 			else
@@ -241,8 +359,6 @@ static int evaluate(int botid, int winnerid, int lastx, int lasty,
 			bad_modifier = STRATEGY_BONUS;
 		else if (your_adv)
 			modifier = STRATEGY_BONUS;
-
-		// fprintf(stderr, "%d\n", modifier - bad_modifier);
 
 		return modifier - bad_modifier;
 	}
