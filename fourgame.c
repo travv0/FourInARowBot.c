@@ -405,13 +405,6 @@ int calc_best_column(void)
 			col = ordering[x];
 
 			if (can_be_placed(col, y, game.field)) {
-
-				/* game.field[col][y] = game.settings.your_botid; */
-				/* fprintf(stderr, "(%d, %d) Your longest line: %d\n", col, y, get_longest_line(col, y, game.settings.your_botid, game.field)); */
-				/* game.field[col][y] = game.settings.their_botid; */
-				/* fprintf(stderr, "(%d, %d) Their longest line: %d\n", col, y, get_longest_line(col, y, game.settings.their_botid, game.field)); */
-				/* game.field[col][y] = 0; */
-
 				game.field[col][y] = game.settings.your_botid;
 				if (game.time_remaining > TIMEBANK_LOW)
 					resAB = alpha_beta(game.field, col, y,
