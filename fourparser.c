@@ -226,6 +226,7 @@ static int handle_command(char *cmd)
 						best_move = calc_best_column();
 						fprintf(stderr, "place_disc %d\n", best_move);
 						printf("place_disc %d\n", best_move);
+						fflush(stdout);
 					} else {
 						fprintf(stderr, "Not enough arguments for command \"action.\"\n");
 						return 2;
