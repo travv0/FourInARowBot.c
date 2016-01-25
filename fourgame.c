@@ -36,8 +36,10 @@ static int board_full(int rnd)
 
 static int can_be_placed(int x, int y, int field[][MAX_FIELD_ROWS])
 {
-	return game.column_fill[x] < game.settings.field_rows
-		&& y == game.settings.field_rows - game.column_fill[x] - 1;
+	return field[x][y] == 0 && (
+			y == game.settings.field_rows - 1 ||
+			field[x][y + 1] != 0
+			);
 }
 
 static int get_count_in_dir(int x, int y, int dx, int dy, int botid,
@@ -181,7 +183,7 @@ static int has_advantage(struct Player chk_player, struct Player opp_player)
 			 (chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count &&
 			  chk_player.attacks.shared_odd_count % 2 != 0) ||
 			 (opp_player.attacks.unshared_odd_count == 0 && (chk_player.attacks.shared_odd_count +
-									 chk_player.attacks.unshared_odd_count) % 2 != 0)
+													  chk_player.attacks.unshared_odd_count) % 2 != 0)
 			)
 	       ) || (chk_player.id == 2 &&
 		       (
@@ -234,6 +236,8 @@ static int evaluate(int botid, int winnerid, int lastx, int lasty,
 		else if (has_advantage(you, them))
 			modifier = STRATEGY_BONUS;
 
+		// fprintf(stderr, "%d\n", modifier - bad_modifier);
+
 		return modifier - bad_modifier;
 	}
 }
@@ -264,16 +268,16 @@ static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,
 			return evaluate(game.settings.your_botid,
 					game.settings.their_botid,
 					x, y, last_player, field)
-				+ ALPHABETA_LEVEL - depth;
+				+ (ALPHABETA_LEVEL - depth);
 		else if (your_longest >= WIN_LENGTH)
 			return evaluate(game.settings.your_botid,
 					game.settings.your_botid,
 					x, y, last_player, field)
-				- ALPHABETA_LEVEL - depth;
+				- (ALPHABETA_LEVEL - depth);
 		else
 			return evaluate(game.settings.your_botid, 0,
 					x, y, last_player, field)
-				- ALPHABETA_LEVEL - depth;
+				- (ALPHABETA_LEVEL - depth);
 	} else if (board_full(game.round + ALPHABETA_LEVEL - depth))
 		return 0;
 
@@ -284,13 +288,11 @@ static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,
 			for (chldy = 0; chldy < game.settings.field_rows; ++chldy) {
 				if (can_be_placed(chldx, chldy, field)) {
 					field[chldx][chldy] = game.settings.your_botid;
-					game.column_fill[chldx]++;
 
 					v = max(v, alpha_beta(field, chldx, chldy, depth - 1, alpha, beta, FALSE));
 					alpha = max(alpha, v);
 
 					field[chldx][chldy] = 0;
-					game.column_fill[chldx]--;
 
 					if (beta <= alpha) {
 						done = TRUE;
@@ -311,13 +313,11 @@ static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,
 			for (chldy = 0; chldy < game.settings.field_rows; ++chldy) {
 				if (can_be_placed(chldx, chldy, field)) {
 					field[chldx][chldy] = game.settings.their_botid;
-					game.column_fill[chldx]++;
 
 					v = min(v, alpha_beta(field, chldx, chldy, depth - 1, alpha, beta, TRUE));
 					beta = min(beta, v);
 
 					field[chldx][chldy] = 0;
-					game.column_fill[chldx]--;
 
 					if (beta <= alpha) {
 						done = TRUE;
@@ -331,36 +331,6 @@ static int alpha_beta(int field[][MAX_FIELD_ROWS], int x, int y, int depth,
 		}
 
 		return v;
-	}
-}
-
-static void fill_column_fill(void)
-{
-	int x;
-	int y;
-	int cnt;
-
-	for (x = 0; x < game.settings.field_columns; ++x) {
-		game.column_fill[x] = 0;
-	}
-
-	if (game.round > 1) {
-		cnt = 0;
-
-		for (x = 0; x < game.settings.field_columns; ++x) {
-			for (y = 0; y < game.settings.field_rows; ++y) {
-				if (game.field[x][y] != 0) {
-					game.column_fill[x]++;
-					cnt++;
-				}
-
-				if (cnt >= game.round - 1)
-					break;
-			}
-
-			if (cnt >= game.round - 1)
-				break;
-		}
 	}
 }
 
@@ -388,8 +358,6 @@ int calc_best_column(void)
 
 	me.attacks = ATTACK_POINTS_DEFAULT;
 	them.attacks = ATTACK_POINTS_DEFAULT;
-
-	fill_column_fill();
 
 	get_attack_point_counts(&me, &them, game.field);
 
