@@ -18,7 +18,6 @@ void dump_game(void)
 	fprintf(stderr, "your_bot: %s\n", game.settings.your_bot);
 	fprintf(stderr, "your_botid: %d\n", game.settings.your_botid);
 	fprintf(stderr, "their_botid: %d\n", game.settings.their_botid);
-	fprintf(stderr, "advantageid: %d\n", game.advantageid);
 	fprintf(stderr, "field_columns: %d\n", game.settings.field_columns);
 	fprintf(stderr, "field_rows: %d\n", game.settings.field_rows);
 	fprintf(stderr, "round: %d\n", game.round);

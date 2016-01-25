@@ -241,10 +241,6 @@ static int evaluate(int botid, int winnerid, int lastx, int lasty,
 			bad_modifier = STRATEGY_BONUS;
 		else if (your_adv)
 			modifier = STRATEGY_BONUS;
-		else if (game.advantageid == you.id && !your_adv)
-			bad_modifier = STRATEGY_BONUS / 2;
-		else if (game.advantageid == them.id && !their_adv)
-			modifier = STRATEGY_BONUS / 2;
 
 		// fprintf(stderr, "%d\n", modifier - bad_modifier);
 
@@ -380,14 +376,10 @@ int calc_best_column(void)
 	fprintf(stderr, "Your unshared even count: %d\n", me.attacks.unshared_even_count);
 	fprintf(stderr, "Their unshared even count: %d\n", them.attacks.unshared_even_count);
 
-	if (has_advantage(me, them)) {
-		game.advantageid = me.id;
+	if (has_advantage(me, them))
 		fprintf(stderr, "Your advantage!\n");
-	} else if (has_advantage(them, me)) {
-		game.advantageid = them.id;
+	else if (has_advantage(them, me))
 		fprintf(stderr, "Their advantage...\n");
-	} else
-		game.advantageid = 0;
 
 	i = game.settings.field_columns / 2;
 	ordering[0] = i;
