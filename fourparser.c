@@ -13,10 +13,12 @@ void dump_game(void)
 
 	fprintf(stderr, "timebank: %d\n", game.settings.timebank);
 	fprintf(stderr, "time_per_move: %d\n", game.settings.time_per_move);
+	fprintf(stderr, "time_remaining: %d\n", game.time_remaining);
 	fprintf(stderr, "player_names: %s\n", game.settings.player_names);
 	fprintf(stderr, "your_bot: %s\n", game.settings.your_bot);
 	fprintf(stderr, "your_botid: %d\n", game.settings.your_botid);
 	fprintf(stderr, "their_botid: %d\n", game.settings.their_botid);
+	fprintf(stderr, "advantageid: %d\n", game.advantageid);
 	fprintf(stderr, "field_columns: %d\n", game.settings.field_columns);
 	fprintf(stderr, "field_rows: %d\n", game.settings.field_rows);
 	fprintf(stderr, "round: %d\n", game.round);
@@ -221,9 +223,10 @@ static int handle_command(char *cmd)
 					if ((token = strtok(NULL, " ")) != NULL) {
 						game.time_remaining = strtol(token, &end, 10);
 
+						best_move = calc_best_column();
+
 						dump_game();
 
-						best_move = calc_best_column();
 						fprintf(stderr, "place_disc %d\n", best_move);
 						printf("place_disc %d\n", best_move);
 						fflush(stdout);

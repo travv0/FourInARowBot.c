@@ -31,7 +31,7 @@ int max(int i, int j)
 
 static int board_full(int rnd)
 {
-	return rnd > game.settings.field_columns * game.settings.field_rows;
+	return rnd >= game.settings.field_columns * game.settings.field_rows;
 }
 
 static int can_be_placed(int x, int y, int field[][MAX_FIELD_ROWS])
@@ -213,6 +213,9 @@ static int evaluate(int botid, int winnerid, int lastx, int lasty,
 	struct Player you;
 	struct Player them;
 
+	int their_adv = FALSE;
+	int your_adv = FALSE;
+
 	you.id = game.settings.your_botid;
 	them.id = game.settings.their_botid;
 
@@ -231,10 +234,17 @@ static int evaluate(int botid, int winnerid, int lastx, int lasty,
 			get_attack_point_counts(&them, &you, field);
 		field[lastx][lasty] = last_player;
 
-		if (has_advantage(them, you))
+		their_adv = has_advantage(them, you);
+		your_adv = has_advantage(you, them);
+
+		if (their_adv)
 			bad_modifier = STRATEGY_BONUS;
-		else if (has_advantage(you, them))
+		else if (your_adv)
 			modifier = STRATEGY_BONUS;
+		else if (game.advantageid == you.id && !your_adv)
+			bad_modifier = STRATEGY_BONUS / 2;
+		else if (game.advantageid == them.id && !their_adv)
+			modifier = STRATEGY_BONUS / 2;
 
 		// fprintf(stderr, "%d\n", modifier - bad_modifier);
 
@@ -370,10 +380,14 @@ int calc_best_column(void)
 	fprintf(stderr, "Your unshared even count: %d\n", me.attacks.unshared_even_count);
 	fprintf(stderr, "Their unshared even count: %d\n", them.attacks.unshared_even_count);
 
-	if (has_advantage(me, them))
+	if (has_advantage(me, them)) {
+		game.advantageid = me.id;
 		fprintf(stderr, "Your advantage!\n");
-	else if (has_advantage(them, me))
+	} else if (has_advantage(them, me)) {
+		game.advantageid = them.id;
 		fprintf(stderr, "Their advantage...\n");
+	} else
+		game.advantageid = 0;
 
 	i = game.settings.field_columns / 2;
 	ordering[0] = i;
@@ -399,8 +413,12 @@ int calc_best_column(void)
 				/* game.field[col][y] = 0; */
 
 				game.field[col][y] = game.settings.your_botid;
-				resAB = alpha_beta(game.field, col, y,
-						ALPHABETA_LEVEL, INT_MIN, INT_MAX, FALSE);
+				if (game.time_remaining > TIMEBANK_LOW)
+					resAB = alpha_beta(game.field, col, y,
+							ALPHABETA_LEVEL, INT_MIN, INT_MAX, FALSE);
+				else
+					resAB = alpha_beta(game.field, col, y,
+							ALPHABETA_LEVEL - 1, INT_MIN, INT_MAX, FALSE);
 				game.field[col][y] = 0;
 
 				fprintf(stderr, "(%d, %d): %d\n", col, y, resAB);
