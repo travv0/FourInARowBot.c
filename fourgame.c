@@ -245,7 +245,7 @@ static int increment_points(struct Player *red, struct Player *black,
 		black_count = get_pot_longest_line(x, y, black->id, field);
 		field[x][y] = 0;
 
-		if (red_count >= WIN_LENGTH - 1 && black_count >= WIN_LENGTH - 1) {
+		if (red_count >= WIN_LENGTH && black_count >= WIN_LENGTH) {
 			if (y % 2 == 0) {
 				red->attacks.shared_even_count++;
 				black->attacks.shared_even_count++;
@@ -257,7 +257,7 @@ static int increment_points(struct Player *red, struct Player *black,
 			return TRUE;
 		}
 
-		if (red_count >= WIN_LENGTH - 1) {
+		if (red_count >= WIN_LENGTH) {
 			if (y % 2 == 0)
 				red->attacks.unshared_even_count++;
 			else
@@ -266,13 +266,43 @@ static int increment_points(struct Player *red, struct Player *black,
 			return TRUE;
 		}
 
-		if (black_count >= WIN_LENGTH - 1) {
+		if (black_count >= WIN_LENGTH) {
 			if (y % 2 == 0)
 				black->attacks.unshared_even_count++;
 			else
 				black->attacks.unshared_odd_count++;
 
 			return TRUE;
+		}
+
+		if (red_count == WIN_LENGTH - 1 && black_count == WIN_LENGTH - 1) {
+			if (y % 2 == 0) {
+				red->attacks.minor_shared_even_count++;
+				black->attacks.minor_shared_even_count++;
+			} else {
+				red->attacks.minor_shared_odd_count++;
+				black->attacks.minor_shared_odd_count++;
+			}
+
+			return FALSE;
+		}
+
+		if (red_count == WIN_LENGTH - 1) {
+			if (y % 2 == 0)
+				red->attacks.minor_unshared_even_count++;
+			else
+				red->attacks.minor_unshared_odd_count++;
+
+			return FALSE;
+		}
+
+		if (black_count == WIN_LENGTH - 1) {
+			if (y % 2 == 0)
+				black->attacks.minor_unshared_even_count++;
+			else
+				black->attacks.minor_unshared_odd_count++;
+
+			return FALSE;
 		}
 	};
 
@@ -293,33 +323,60 @@ static void get_attack_point_counts(struct Player *red, struct Player *black,
 	}
 }
 
-static int has_advantage(struct Player chk_player, struct Player opp_player)
+static int has_advantage(struct Player chk_player, struct Player opp_player, int potential)
 {
-	return (chk_player.id == 1 &&
-			(
-			 chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count + 1 ||
-			 (chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count &&
-			  chk_player.attacks.shared_odd_count % 2 != 0) ||
-			 (opp_player.attacks.unshared_odd_count == 0 && (chk_player.attacks.shared_odd_count +
-													  chk_player.attacks.unshared_odd_count) % 2 != 0)
-			)
-	       ) || (chk_player.id == 2 &&
-		       (
-			(opp_player.attacks.shared_odd_count + opp_player.attacks.unshared_odd_count == 0 &&
-			 chk_player.attacks.shared_even_count + chk_player.attacks.unshared_even_count > 0) ||
-			chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count + 2 ||
-			(chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count &&
-			 opp_player.attacks.shared_odd_count > 0 && (opp_player.attacks.shared_odd_count % 2) == 0) ||
-			(chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count + 1 &&
-			 opp_player.attacks.unshared_odd_count > 0) ||
-			(opp_player.attacks.unshared_odd_count == 0 &&
-			 chk_player.attacks.unshared_odd_count == 1 &&
-			 opp_player.attacks.shared_odd_count > 0) ||
-			(opp_player.attacks.unshared_odd_count = 0 &&
-			 chk_player.attacks.shared_odd_count + chk_player.attacks.unshared_odd_count > 0 &&
-			 (chk_player.attacks.shared_odd_count + chk_player.attacks.unshared_odd_count) % 2 == 0)
-		       )
-		    );
+	if (potential == FALSE)
+		return (chk_player.id == 1 &&
+				(
+				 chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count + 1 ||
+				 (chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count &&
+				  chk_player.attacks.shared_odd_count % 2 != 0) ||
+				 (opp_player.attacks.unshared_odd_count == 0 && (chk_player.attacks.shared_odd_count +
+										 chk_player.attacks.unshared_odd_count) % 2 != 0)
+				)
+		       ) || (chk_player.id == 2 &&
+			       (
+				(opp_player.attacks.shared_odd_count + opp_player.attacks.unshared_odd_count == 0 &&
+				 chk_player.attacks.shared_even_count + chk_player.attacks.unshared_even_count > 0) ||
+				chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count + 2 ||
+				(chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count &&
+				 opp_player.attacks.shared_odd_count > 0 && (opp_player.attacks.shared_odd_count % 2) == 0) ||
+				(chk_player.attacks.unshared_odd_count == opp_player.attacks.unshared_odd_count + 1 &&
+				 opp_player.attacks.unshared_odd_count > 0) ||
+				(opp_player.attacks.unshared_odd_count == 0 &&
+				 chk_player.attacks.unshared_odd_count == 1 &&
+				 opp_player.attacks.shared_odd_count > 0) ||
+				(opp_player.attacks.unshared_odd_count = 0 &&
+				 chk_player.attacks.shared_odd_count + chk_player.attacks.unshared_odd_count > 0 &&
+				 (chk_player.attacks.shared_odd_count + chk_player.attacks.unshared_odd_count) % 2 == 0)
+			       )
+			    );
+	else
+		return (chk_player.id == 1 &&
+				(
+				 chk_player.attacks.minor_unshared_odd_count == opp_player.attacks.minor_unshared_odd_count + 1 ||
+				 (chk_player.attacks.minor_unshared_odd_count == opp_player.attacks.minor_unshared_odd_count &&
+				  chk_player.attacks.minor_shared_odd_count % 2 != 0) ||
+				 (opp_player.attacks.minor_unshared_odd_count == 0 && (chk_player.attacks.minor_shared_odd_count +
+										 chk_player.attacks.minor_unshared_odd_count) % 2 != 0)
+				)
+		       ) || (chk_player.id == 2 &&
+			       (
+				(opp_player.attacks.minor_shared_odd_count + opp_player.attacks.minor_unshared_odd_count == 0 &&
+				 chk_player.attacks.minor_shared_even_count + chk_player.attacks.minor_unshared_even_count > 0) ||
+				chk_player.attacks.minor_unshared_odd_count == opp_player.attacks.minor_unshared_odd_count + 2 ||
+				(chk_player.attacks.minor_unshared_odd_count == opp_player.attacks.minor_unshared_odd_count &&
+				 opp_player.attacks.minor_shared_odd_count > 0 && (opp_player.attacks.minor_shared_odd_count % 2) == 0) ||
+				(chk_player.attacks.minor_unshared_odd_count == opp_player.attacks.minor_unshared_odd_count + 1 &&
+				 opp_player.attacks.minor_unshared_odd_count > 0) ||
+				(opp_player.attacks.minor_unshared_odd_count == 0 &&
+				 chk_player.attacks.minor_unshared_odd_count == 1 &&
+				 opp_player.attacks.minor_shared_odd_count > 0) ||
+				(opp_player.attacks.minor_unshared_odd_count = 0 &&
+				 chk_player.attacks.minor_shared_odd_count + chk_player.attacks.minor_unshared_odd_count > 0 &&
+				 (chk_player.attacks.minor_shared_odd_count + chk_player.attacks.minor_unshared_odd_count) % 2 == 0)
+			       )
+			    );
 }
 
 static int evaluate(int botid, int winnerid, int lastx, int lasty,
@@ -327,12 +384,16 @@ static int evaluate(int botid, int winnerid, int lastx, int lasty,
 {
 	int modifier = 0;
 	int bad_modifier = 0;
+	int pot_modifier = 0;
+	int pot_bad_modifier = 0;
 
 	struct Player you;
 	struct Player them;
 
 	int their_adv = FALSE;
 	int your_adv = FALSE;
+	int pot_their_adv = FALSE;
+	int pot_your_adv = FALSE;
 
 	you.id = game.settings.your_botid;
 	them.id = game.settings.their_botid;
@@ -352,15 +413,21 @@ static int evaluate(int botid, int winnerid, int lastx, int lasty,
 			get_attack_point_counts(&them, &you, field);
 		field[lastx][lasty] = last_player;
 
-		their_adv = has_advantage(them, you);
-		your_adv = has_advantage(you, them);
+		their_adv = has_advantage(them, you, FALSE);
+		your_adv = has_advantage(you, them, FALSE);
+		pot_their_adv = has_advantage(them, you, TRUE);
+		pot_your_adv = has_advantage(you, them, TRUE);
 
 		if (their_adv)
 			bad_modifier = STRATEGY_BONUS;
 		else if (your_adv)
 			modifier = STRATEGY_BONUS;
+		else if (pot_their_adv)
+			pot_bad_modifier = POT_STRATEGY_BONUS;
+		else if (pot_your_adv)
+			pot_modifier = POT_STRATEGY_BONUS;
 
-		return modifier - bad_modifier;
+		return modifier - bad_modifier + pot_modifier - pot_bad_modifier;
 	}
 }
 
@@ -492,9 +559,9 @@ int calc_best_column(void)
 	fprintf(stderr, "Your unshared even count: %d\n", me.attacks.unshared_even_count);
 	fprintf(stderr, "Their unshared even count: %d\n", them.attacks.unshared_even_count);
 
-	if (has_advantage(me, them))
+	if (has_advantage(me, them, FALSE))
 		fprintf(stderr, "Your advantage!\n");
-	else if (has_advantage(them, me))
+	else if (has_advantage(them, me, FALSE))
 		fprintf(stderr, "Their advantage...\n");
 
 	i = game.settings.field_columns / 2;
@@ -514,7 +581,7 @@ int calc_best_column(void)
 
 			if (can_be_placed(col, y, game.field)) {
 				game.field[col][y] = game.settings.your_botid;
-				if (game.time_remaining > TIMEBANK_LOW)
+				if (game.time_remaining > TIMEBANK_LOW && game.round > 11)
 					resAB = alpha_beta(game.field, col, y,
 							ALPHABETA_LEVEL, INT_MIN, INT_MAX, FALSE);
 				else
